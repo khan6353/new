@@ -1,0 +1,241 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic-Tac-Toe: Neon Edition</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="neon-text">Tic-Tac-Toe: Neon Edition</h1>
+    <div class="scoreboard">
+      <div>Player: <span id="player-score">0</span></div>
+      <div>AI: <span id="ai-score">0</span></div>
+    </div>
+    <div class="game-board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <div class="status">Your Turn!</div>
+    <div class="winner-badge" id="winner-badge"></div>
+    <button id="restart">Restart Game</button>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html><style>body {
+  font-family: 'Poppins', sans-serif;
+  background: radial-gradient(circle at center, #1b1b1b, #0f0f0f);
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+
+.neon-text {
+  color: #0ff;
+  text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+}
+
+.container {
+  margin-top: 50px;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 20px;
+  font-size: 1.2em;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-gap: 5px;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.cell {
+  width: 100px;
+  height: 100px;
+  background: #1f1f1f;
+  border: 2px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5em;
+  cursor: pointer;
+  color: #fff;
+  transition: box-shadow 0.3s ease;
+}
+
+.cell:hover {
+  box-shadow: 0 0 10px #0ff;
+}
+
+.cell.taken {
+  pointer-events: none;
+  box-shadow: 0 0 5px #ff0;
+}
+
+.status {
+  margin: 20px 0;
+  font-size: 1.2em;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 1em;
+  background: linear-gradient(45deg, #ff0080, #ff8000);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: linear-gradient(45deg, #ff8000, #ff0080);
+}
+
+
+.winner-badge {
+  margin-top: 20px;
+  font-size: 2em;
+  color: #ff0;
+  font-weight: bold;
+  text-shadow: 0 0 10px #ff0;
+  visibility: hidden;
+  animation: winnerAnim 1s forwards;
+}
+
+@keyframes winnerAnim {
+  0% {
+    transform: scale(0);
+    visibility: visible;
+  }
+  100% {
+    transform: scale(1);
+  }
+}</style><script>const cells = document.querySelectorAll(".cell");
+const statusDisplay = document.querySelector(".status");
+const restartButton = document.getElementById("restart");
+const playerScoreEl = document.getElementById("player-score");
+const aiScoreEl = document.getElementById("ai-score");
+const winnerBadge = document.getElementById("winner-badge");
+
+const player = "X";
+const ai = "O";
+
+let board = ["", "", "", "", "", "", "", "", ""];
+let gameActive = true;
+let playerScore = 0;
+let aiScore = 0;
+
+const winConditions = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
+// Update the scores on the UI
+function updateScores() {
+  playerScoreEl.textContent = playerScore;
+  aiScoreEl.textContent = aiScore;
+}
+
+// Color winning cells
+function highlightWinningCells(winningCells) {
+  winningCells.forEach(index => {
+    cells[index].style.backgroundColor = '#ff0'; // Yellow for winning cells
+    cells[index].style.color = '#000'; // Change text color to dark for visibility
+  });
+}
+
+// Check for winner or tie
+function checkGameStatus() {
+  for (let condition of winConditions) {
+    const [a, b, c] = condition;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      gameActive = false;
+      const winner = board[a] === player ? "Player" : "AI";
+      highlightWinningCells([a, b, c]);
+      winnerBadge.textContent = `${winner} 🥇 Wins!`;
+      winnerBadge.style.visibility = 'visible';
+      if (winner === "Player") playerScore++;
+      else aiScore++;
+      updateScores();
+      return;
+    }
+  }
+
+  if (!board.includes("")) {
+    gameActive = false;
+    statusDisplay.textContent = "It's a Tie!";
+  }
+}
+
+// AI Logic: Using a simple random AI for now
+function aiTurn() {
+  if (!gameActive) return;
+
+  let emptyCells = board.map((val, index) => (val === "" ? index : null)).filter(val => val !== null);
+  if (emptyCells.length > 0) {
+    const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    board[randomIndex] = ai;
+    cells[randomIndex].textContent = ai;
+    cells[randomIndex].classList.add("taken");
+    checkGameStatus();
+    if (gameActive) statusDisplay.textContent = "Your Turn!";
+  }
+
+}
+
+// Handle user input
+function handleCellClick(e) {
+  const index = e.target.getAttribute("data-index");
+
+  if (board[index] === "" && gameActive) {
+    board[index] = player;
+    e.target.textContent = player;
+    e.target.classList.add("taken");
+    checkGameStatus();
+    if (gameActive) {
+      statusDisplay.textContent = "AI's Turn...";
+      setTimeout(aiTurn, 500); // Simulate AI thinking
+    }
+  }
+}
+
+// Restart game
+function restartGame() {
+  board = ["", "", "", "", "", "", "", "", ""];
+  gameActive = true;
+  winnerBadge.style.visibility = 'hidden'; // Hide winner badge
+  statusDisplay.textContent = "Your Turn!";
+  cells.forEach(cell => {
+    cell.textContent = "";
+    cell.classList.remove("taken");
+    cell.style.backgroundColor = '#1f1f1f'; // Reset cell color
+  });
+}
+
+// Event listeners
+cells.forEach(cell => cell.addEventListener("click", handleCellClick));
+restartButton.addEventListener("click", restartGame);
+
+</script>
